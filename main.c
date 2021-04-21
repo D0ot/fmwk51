@@ -13,7 +13,6 @@
 #include "xpt2046.h"
 
 
-
 u16 counter;
 
 u8 line_buf[16];
@@ -21,8 +20,13 @@ u8 kb_event;
 u8 kb_press;
 u16 temperature;
 
-u16 max_t;
-u16 min_t;
+volatile u16 max_t;
+bit max_t_write;
+u8 max_cnt;
+volatile u16 min_t;
+bit min_t_write;
+u16 temp_save;
+u8 min_cnt;
 
 sbit LED = P3 ^ 0;
 
@@ -70,7 +74,7 @@ u8 timer1_loop_val;
 u16 seconds;
 u16 rps;
 
-#define MAX_ADDR (0)
+#define MAX_ADDR (16)
 #define MIN_ADDR (8)
 
 void timer1_interrupt() interrupt 3
@@ -87,14 +91,13 @@ void timer1_interrupt() interrupt 3
 		temperature = ds18b20_read();
 		if(max_t < temperature && !stop) {
 			max_t = temperature;
-      at24c02_write(MAX_ADDR, (u8*)&(max_t), sizeof(max_t));
+      max_t_write = 1;
 		}
 		if(min_t > temperature && !stop) {
 			min_t = temperature;
-      at24c02_write(MIN_ADDR, (u8*)&(min_t), sizeof(min_t));
+      min_t_write = 1;
 		}
 	}
-
 }
 
 u8 show;
@@ -128,25 +131,30 @@ void main() {
 	mode = 0;
 	LED = 0;
   max_t = 0;
+  max_t_write = 0;
   min_t = 0xffff;
+  min_t_write = 0;
+
   
 	at24c02_init();
+  delay(10);
   at24c02_read(MAX_ADDR, (u8*)(&temp16), sizeof(temp16));
-  if(temp16 > max_t) {
-    max_t = temp16;
-  }
+  //temp16 = at24c02_read_byte(MAX_ADDR) << 4;
+  max_t = temp16;
   at24c02_read(MIN_ADDR, (u8*)(&temp16), sizeof(temp16));
-  if(temp16 < min_t) {
-    min_t = temp16;
-  }
+  //temp16 = at24c02_read_byte(MIN_ADDR) << 4;
+  min_t = temp16;
+  
+  sprintf(line_buf, "%u, %u", max_t >> 4, min_t >> 4);
 	ds18b20_init();
 	counter_init();
 
 
 	lcd_init();
+  lcd_display(0, 0, line_buf);
+	Delay3000ms();
 	lcd_display(1, 0, xc1);
 	lcd_display(2, 0, xc2);
-	Delay3000ms();
 
 	scroll_show();
 	timer1_init();
@@ -159,7 +167,6 @@ void main() {
 		kb_event = kb_get_event();
 		kb_press = kb_scan();
 		tempf = xpt2046_read(AD_CH2) * 0.00477;
-		lcd_display(3, 0, line_buf);
 
 		temp16 = rps << 4;
 		sprintf(line_buf, "PWM:%2bu%%", pwm_current);
@@ -265,7 +272,7 @@ void main() {
 				break;
 		}
 
-		switch(mode) {
+	  /*switch(mode) {
 			// main menu
 			case 0:
 				lcd_display(0, 0, main_menu);
@@ -278,9 +285,31 @@ void main() {
 			case 2:
 				lcd_display(0, 0, manual_str);
 				break;
-		}
+		}*/
+
+    if(min_t_write) {
+      min_t_write = 0;
+      temp_save = min_t;
+      min_cnt++;
+      sprintf(line_buf, "min cnt: %bu", min_cnt);
+      lcd_display(0, 0, line_buf);
+      at24c02_init();
+      delay(10);
+      at24c02_write(MIN_ADDR, (void*)&(temp_save), sizeof(temp_save));
+    }
 
 
+    if(max_t_write) {
+      max_t_write = 0;
+      temp_save = max_t;
+      max_cnt++;
+      sprintf(line_buf, "max cnt: %bu", max_cnt);
+      lcd_display(0, 0, line_buf);
+      at24c02_init();
+      delay(10);
+      at24c02_write(MAX_ADDR, (void*)&(temp_save), sizeof(temp_save));
+    }
 
+   
 	}
 }

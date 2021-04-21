@@ -5,6 +5,7 @@ void i2c_init() {
 }
 
 void i2c_start() {
+  // at this time, SDA = 1, SCL = 1
 	SDA = 0;
 	delay_5us();
 	SCL = 0;
@@ -22,6 +23,7 @@ void i2c_re_start() {
 
 void i2c_stop() {
 	SDA = 0;
+  delay_5us();
 	SCL = 1;
 	delay_5us(); // t_SU;STO 4us
 	SDA = 1;
@@ -77,10 +79,12 @@ void i2c_nack() {
 
 bit i2c_read_ack() {
 	bit buf = 1;
+  u8 i = 0;
 	delay_5us();
 	SDA = 1;
 	SCL = 1;
 	delay_5us();
+  while(SDA == 1 && ++i < 255);
 	buf = SDA;
 	SCL = 0;
 	return buf;

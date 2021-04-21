@@ -58,4 +58,5 @@ void at24c02_read(u8 addr, u8 *dat, u16 count){
 	*dat = i2c_read();
 	i2c_nack();
 	i2c_stop();
+	i2c_stop();
 }
