@@ -139,22 +139,18 @@ void main() {
 	at24c02_init();
   delay(10);
   at24c02_read(MAX_ADDR, (u8*)(&temp16), sizeof(temp16));
-  //temp16 = at24c02_read_byte(MAX_ADDR) << 4;
   max_t = temp16;
   at24c02_read(MIN_ADDR, (u8*)(&temp16), sizeof(temp16));
-  //temp16 = at24c02_read_byte(MIN_ADDR) << 4;
   min_t = temp16;
   
-  sprintf(line_buf, "%u, %u", max_t >> 4, min_t >> 4);
 	ds18b20_init();
 	counter_init();
 
 
 	lcd_init();
-  lcd_display(0, 0, line_buf);
-	Delay3000ms();
 	lcd_display(1, 0, xc1);
 	lcd_display(2, 0, xc2);
+	Delay3000ms();
 
 	scroll_show();
 	timer1_init();
@@ -272,7 +268,7 @@ void main() {
 				break;
 		}
 
-	  /*switch(mode) {
+	  switch(mode) {
 			// main menu
 			case 0:
 				lcd_display(0, 0, main_menu);
@@ -285,14 +281,14 @@ void main() {
 			case 2:
 				lcd_display(0, 0, manual_str);
 				break;
-		}*/
+		}
 
     if(min_t_write) {
       min_t_write = 0;
       temp_save = min_t;
       min_cnt++;
-      sprintf(line_buf, "min cnt: %bu", min_cnt);
-      lcd_display(0, 0, line_buf);
+      //sprintf(line_buf, "min cnt: %bu", min_cnt);
+      //lcd_display(0, 0, line_buf);
       at24c02_init();
       delay(10);
       at24c02_write(MIN_ADDR, (void*)&(temp_save), sizeof(temp_save));
@@ -303,8 +299,8 @@ void main() {
       max_t_write = 0;
       temp_save = max_t;
       max_cnt++;
-      sprintf(line_buf, "max cnt: %bu", max_cnt);
-      lcd_display(0, 0, line_buf);
+      //sprintf(line_buf, "max cnt: %bu", max_cnt);
+      //lcd_display(0, 0, line_buf);
       at24c02_init();
       delay(10);
       at24c02_write(MAX_ADDR, (void*)&(temp_save), sizeof(temp_save));
