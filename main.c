@@ -12,6 +12,8 @@
 #include "at24c02.h"
 #include "xpt2046.h"
 
+
+
 u16 counter;
 
 u8 line_buf[16];
@@ -19,8 +21,8 @@ u8 kb_event;
 u8 kb_press;
 u16 temperature;
 
-xdata u16 max_t;
-xdata u16 min_t;
+u16 max_t;
+u16 min_t;
 
 sbit LED = P3 ^ 0;
 
@@ -59,8 +61,8 @@ void timer1_init()
 	TMOD |= 0x10;
 	TL1 = 0x00;
 	TH1 = 0x4C;
-	TF1 = 0;		
-	TR1 = 1;		
+	TF1 = 0;
+	TR1 = 1;
 	ET1 = 1;
 }
 
@@ -73,7 +75,7 @@ u16 rps;
 
 void timer1_interrupt() interrupt 3
 {
-	
+
 	TH1 = 0x4c;
 	++timer1_loop_val;
 	if(timer1_loop_val == 20)
@@ -85,22 +87,23 @@ void timer1_interrupt() interrupt 3
 		temperature = ds18b20_read();
 		if(max_t < temperature && !stop) {
 			max_t = temperature;
+      at24c02_write(MAX_ADDR, (u8*)&(max_t), sizeof(max_t));
 		}
 		if(min_t > temperature && !stop) {
 			min_t = temperature;
+      at24c02_write(MIN_ADDR, (u8*)&(min_t), sizeof(min_t));
 		}
 	}
-	
+
 }
 
 u8 show;
-u8 test_str[] = "0123456789abcdf";
 u8 xdata xc1[] = "  XC2018217758  ";
 u8 xdata xc2[] = "  XC2018217691  ";
 u8 code blank_line[] = "                ";
 void scroll_show() {
 	temp = 0;
-	
+
 	while(temp < 15)
 	{
 		lcd_display(1, 0, xc1 + temp);
@@ -124,48 +127,54 @@ float tempf;
 void main() {
 	mode = 0;
 	LED = 0;
+  max_t = 0;
+  min_t = 0xffff;
+  
+	at24c02_init();
+  at24c02_read(MAX_ADDR, (u8*)(&temp16), sizeof(temp16));
+  if(temp16 > max_t) {
+    max_t = temp16;
+  }
+  at24c02_read(MIN_ADDR, (u8*)(&temp16), sizeof(temp16));
+  if(temp16 < min_t) {
+    min_t = temp16;
+  }
 	ds18b20_init();
 	counter_init();
-	
+
+
 	lcd_init();
 	lcd_display(1, 0, xc1);
 	lcd_display(2, 0, xc2);
-	at24c02_init();
 	Delay3000ms();
-	
+
 	scroll_show();
 	timer1_init();
-	max_t = 0;
-	min_t = 65535;
-	
 	pwm_init();
 	pwm_set(40);
 	pwm_current = 40;
 	pwm_enable(1);
-	
+
 	while(1) {
 		kb_event = kb_get_event();
 		kb_press = kb_scan();
 		tempf = xpt2046_read(AD_CH2) * 0.00477;
 		lcd_display(3, 0, line_buf);
-		
 
 		temp16 = rps << 4;
 		sprintf(line_buf, "PWM:%2bu%%", pwm_current);
 		lcd_display(2, 0, line_buf);
 		sprintf(line_buf, "RPM:%4u", temp16);
 		lcd_display(2, 4, line_buf);
-		
 
-		
 		if(mode != 2 ) {
 			sprintf(line_buf, "TEMP:%u.%u", temperature >> 4, ds18b20_get_fra(temperature));
 		}else {
-			sprintf(line_buf, "VOLTAGE:%4.2f", tempf); 
+			sprintf(line_buf, "VOLTAGE:%4.2f", tempf);
 		}
 		lcd_display(1, 0, line_buf);
 		line_buf[0] = 0;
-		
+
 		if(!stop && mode !=1) {
 				if(kb_event == 1 && !stop ) {
 				pwm_current += 5;
@@ -181,14 +190,14 @@ void main() {
 				pwm_set(pwm_current);
 			}
 		}
-		
+
 		if(mode == 1 && !stop) {
 			pwm_current = temperature / 3 - 95;
 			pwm_set(pwm_current);
 		}
-		
+
 		if(mode == 2 && !stop) {
-			
+
 			if(tempf <= 2) {
 				pwm_current = (u8)(tempf * 20);
 			}else if(tempf < 3.5) {
@@ -198,13 +207,13 @@ void main() {
 			}
 			pwm_set(pwm_current);
 		}
-		
+
 		if(kb_event == 5) {
 			if(stop) {
 				pwm_current = 40;
 				stop = 0;
 				LED = 0;
-				
+
 			} else {
 				pwm_current = 0;
 				stop = 1;
@@ -239,8 +248,12 @@ void main() {
 				mode = 2;
 			}
 			lcd_display(0, 0, blank_line);
-		}
-		
+		} else if(kb_event == 6) {
+      min_t = 0xffff;
+      max_t = 0;
+      lcd_display(3, 0, blank_line);
+    }
+
 		switch(show) {
 			case 1:
 				sprintf(line_buf, "MAX T:%u.%u", max_t >> 4, ds18b20_get_fra(max_t));
@@ -267,8 +280,7 @@ void main() {
 				break;
 		}
 
-		
-		
-		
+
+
 	}
 }
