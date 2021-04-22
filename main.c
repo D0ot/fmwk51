@@ -12,6 +12,7 @@
 #include "at24c02.h"
 #include "xpt2046.h"
 #include "weight.h"
+#include "ds1302.h"
 
 
 void counter_init()
@@ -105,6 +106,7 @@ void main() {
   ds18b20_init();
   counter_init();
 
+  Set_DS1302_Time();
 
   lcd_init();
   lcd_display(1, 0, xc1);
@@ -133,5 +135,11 @@ void main() {
     sprintf(line_buf, "%f", readGram(readCount()));
     lcd_display(1, 0, line_buf);
     delay(100);
+    Read_DS1302_Time();
+
+    lcd_display(2, 0, blank_line);
+    delay(500);
+    sprintf(line_buf, "%bu, %bu", TimeData[DS1302_SEC], TimeData[DS1302_MIN]);
+    lcd_display(2, 0, line_buf);
   }
 }
