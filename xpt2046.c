@@ -2,7 +2,7 @@
 #include <intrins.h>
 #include "xpt2046.h"
 
-#define MAIN_Fosc		11059200UL	//宏定义主时钟HZ
+#define MAIN_Fosc		11059200UL
 
 sbit CS = P3^7;
 sbit DCLK = P2^1;

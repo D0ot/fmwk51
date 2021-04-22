@@ -466,6 +466,16 @@
               <FileType>5</FileType>
               <FilePath>.\ds18b20.h</FilePath>
             </File>
+            <File>
+              <FileName>weight.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\weight.c</FilePath>
+            </File>
+            <File>
+              <FileName>weight.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\weight.h</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
