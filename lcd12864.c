@@ -47,7 +47,7 @@ void lcd_write_cmd(u8 cmd)
 
 void lcd_write_data(u8 dat)
 {
-	  while(lcd_busy());
+    while(lcd_busy());
     LCD_RS = 1;
     LCD_RW = 0;
     LCD_EN = 0;
@@ -62,15 +62,15 @@ u8 code lcd_offset_table[4] = {0x80, 0x90, 0x88, 0x98};
 u8 lcd_i;
 void lcd_display(u8 x, u8 y,u8* dat)
 {
-	x = lcd_offset_table[x];
-	lcd_write_cmd(x + y);
-	for(lcd_i = 0; lcd_i < 16 && dat[lcd_i]; ++lcd_i) {
-		lcd_write_data(dat[lcd_i]);
-	}
+  x = lcd_offset_table[x];
+  lcd_write_cmd(x + y);
+  for(lcd_i = 0; lcd_i < 16 && dat[lcd_i]; ++lcd_i) {
+    lcd_write_data(dat[lcd_i]);
+  }
 }
 
 void lcd_raw_display(u8 *dat, u8 s) {
-	for(lcd_i = 0; lcd_i < s && dat[lcd_i]; ++lcd_i) {
-		lcd_write_data(dat[lcd_i]);
-	}
+  for(lcd_i = 0; lcd_i < s && dat[lcd_i]; ++lcd_i) {
+    lcd_write_data(dat[lcd_i]);
+  }
 }
